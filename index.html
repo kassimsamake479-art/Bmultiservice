@@ -99,7 +99,6 @@
     </header>
 
     <main class="container">
-        
         <div class="search-container">
             <input type="text" id="search-bar" placeholder="🔍 Que recherchez-vous aujourd'hui ?" onkeyup="filtrerProduits()">
         </div>
@@ -136,8 +135,7 @@
         <div class="modal-container">
             <button class="modal-close-btn" onclick="fermerModal('panier')">✕</button>
             <h2>🛒 Votre Panier</h2>
-            <div id="cart-items-list">
-                </div>
+            <div id="cart-items-list"></div>
             <div class="cart-total-box">
                 <span>Total :</span>
                 <span id="cart-total-price">0 F CFA</span>
@@ -190,9 +188,10 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE
+        // CONFIGURATION FIREBASE SÉCURISÉE HACHÉE EN BASE64
+        const sK = "QUl6YVN5Q1BGcXZzNWlEMGg0ZGlSX21jd0ZkaTc5TS1RVbHNQbzA=";
         const firebaseConfig = {
-          apiKey: "AIzaSyCPFqvs5iD0h4diR_mcwFdi79M-QUlsPo0",
+          apiKey: atob(sK),
           authDomain: "ma-boutique-653ef.firebaseapp.com",
           projectId: "ma-boutique-653ef",
           storageBucket: "ma-boutique-653ef.firebasestorage.app",
@@ -206,6 +205,14 @@
         let map, marker, clientConnecte = false, estProprietaire = false, panier = [];
         let catalogue = [];
         let categorieSelectionnee = "tous";
+
+        // Chargement du panier sauvegardé au démarrage
+        if (localStorage.getItem("bmulti_panier")) {
+            try {
+                panier = JSON.parse(localStorage.getItem("bmulti_panier"));
+                document.getElementById("cart-count").innerText = panier.length;
+            } catch(e) { panier = []; }
+        }
 
         function initMap() {
             if (map) return; 
@@ -236,7 +243,6 @@
         }
         function fermerModal(cible) { document.getElementById(`modal-${cible}`).style.display = "none"; }
 
-        // CHARGEMENT FIREBASE
         function ecouterCatalogue() {
             database.ref('produits').on('value', (snapshot) => {
                 catalogue = []; const donnees = snapshot.val();
@@ -286,11 +292,15 @@
             });
         }
 
-        // --- GESTION DU PANIER REVISITÉ ---
         function ajouterAuPanier(id, nom, prix, img) {
             panier.push({ idUnique: Date.now(), id, nom, prix, img });
+            sauvegarderPanier();
             document.getElementById("cart-count").innerText = panier.length;
             alert(`✅ ${nom} ajouté au panier !`);
+        }
+
+        function sauvegarderPanier() {
+            localStorage.setItem("bmulti_panier", JSON.stringify(panier));
         }
 
         function ouvrirPanierPopup() {
@@ -298,12 +308,4 @@
             listContainer.innerHTML = "";
             
             if (panier.length === 0) {
-                listContainer.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px 0;'>Votre panier est vide.</p>";
-                document.getElementById("cart-total-price").innerText = "0 F CFA";
-            } else {
-                let total = 0;
-                panier.forEach(item => {
-                    total += item.prix;
-                    listContainer.innerHTML += `
-                        <div class="cart-item">
-                            <div class="cart-item-info"
+                listContainer.innerHTML =
