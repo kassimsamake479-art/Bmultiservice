@@ -308,4 +308,106 @@
             listContainer.innerHTML = "";
             
             if (panier.length === 0) {
-                listContainer.innerHTML =
+                listContainer.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px 0;'>Votre panier est vide.</p>";
+                document.getElementById("cart-total-price").innerText = "0 F CFA";
+            } else {
+                let total = 0;
+                panier.forEach(item => {
+                    total += item.prix;
+                    listContainer.innerHTML += `
+                        <div class="cart-item">
+                            <div class="cart-item-info">
+                                <img src="${item.img}" class="cart-item-img">
+                                <div>
+                                    <div class="cart-item-title">${item.nom}</div>
+                                    <div class="cart-item-price">${item.prix.toLocaleString('fr-FR')} F CFA</div>
+                                </div>
+                            </div>
+                            <button class="btn-remove-item" onclick="retirerDuPanier(${item.idUnique})">❌</button>
+                        </div>`;
+                });
+                document.getElementById("cart-total-price").innerText = total.toLocaleString('fr-FR') + " F CFA";
+            }
+            document.getElementById("modal-panier").style.display = "flex";
+        }
+
+        function retirerDuPanier(idUnique) {
+            panier = panier.filter(item => item.idUnique !== idUnique);
+            sauvegarderPanier();
+            document.getElementById("cart-count").innerText = panier.length;
+            ouvrirPanierPopup();
+        }
+
+        function clicPasserCommande() {
+            if (panier.length === 0) return alert("Votre panier est vide.");
+            fermerModal('panier');
+            if (!clientConnecte) {
+                document.getElementById("modal-inscription").style.display = "flex";
+            } else {
+                document.getElementById("modal-finalisation").style.display = "flex";
+                setTimeout(initMap, 300);
+            }
+        }
+
+        function validerInscription(event) {
+            event.preventDefault();
+            auth.createUserWithEmailAndPassword(document.getElementById("client-email").value, document.getElementById("client-code").value)
+                .then(() => { clientConnecte = true; basculerModal('inscription', 'finalisation'); })
+                .catch((e) => alert(e.message));
+        }
+
+        function validerConnexionClient(event) {
+            event.preventDefault();
+            auth.signInWithEmailAndPassword(document.getElementById("login-email").value, document.getElementById("login-code").value)
+                .then(() => { clientConnecte = true; basculerModal('inscription', 'finalisation'); })
+                .catch((e) => alert(e.message));
+        }
+
+        function ValiderCommandeFin(event) {
+            event.preventDefault();
+            const tel = document.getElementById("client-tel").value;
+            const coords = document.getElementById("client-coords").value;
+            const totalCommande = panier.reduce((s, i) => s + i.prix, 0).toLocaleString('fr-FR') + " F CFA";
+            const listeArticles = panier.map(item => item.nom).join(", ");
+            const chiffresPurs = coords.replace("Lat: ", "").replace(" Lng: ", "");
+            const lienItineraire = "https://www.google.com/maps?q=" + chiffresPurs;
+
+            fetch("https://formspree.io/f/mkoejwed", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "Téléphone du client": tel, "Articles commandés": listeArticles, "Montant Total": totalCommande, "Lien Itinéraire Livraison": lienItineraire })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Commande réussie ! Le vendeur a reçu vos coordonnées.");
+                    panier = [];
+                    sauvegarderPanier();
+                    document.getElementById("cart-count").innerText = "0";
+                    fermerModal('finalisation');
+                } else { alert("Erreur lors de la validation."); }
+            }).catch(() => alert("Erreur réseau."));
+        }
+        
+        function ouvrirEspaceProprietaire() {
+            if (prompt("Mot de passe :") === "admin123") { estProprietaire = true; document.getElementById("admin-panel").style.display = "block"; filtrerProduits(); }
+        }
+
+        function ajouterProduitManuel() {
+            const t = document.getElementById("new-title").value; const p = parseFloat(document.getElementById("new-price").value);
+            const i = document.getElementById("new-img").value; const c = document.getElementById("new-category").value;
+            if (t && !isNaN(p) && i && c) {
+                const nouvelId = database.ref('produits').push().key;
+                database.ref('produits/' + nouvelId).set({ titre: t, prix: p, img: i, categorie: c }).then(() => {
+                    document.getElementById("new-title").value = ""; document.getElementById("new-price").value = ""; document.getElementById("new-img").value = "";
+                    alert("Produit enregistré !");
+                });
+            } else { alert("Remplissez tous les champs."); }
+        }
+
+        function retirerProduit(id) {
+            if(confirm("Supprimer ce produit ?")) { database.ref('produits/' + id).remove(); }
+        }
+
+        window.onload = ecouterCatalogue;
+    </script>
+</body>
+</html>
