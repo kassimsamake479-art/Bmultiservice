@@ -149,8 +149,8 @@
             <button class="modal-close-btn" onclick="fermerModal('inscription')">✕</button>
             <h2>Créer un compte</h2>
             <form id="inscriptionForm" onsubmit="validerInscription(event)">
-                <div class="form-group"><label>Adresse Email</label><input type="email" required id="client-email"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code" placeholder="Propriétaire: admin123"></div>
+                <div class="form-group"><label>Adresse Email</label><input type="email" required id="client-email" placeholder="votre@email.com"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code" placeholder="••••••••"></div>
                 <button type="submit" class="btn-submit">S'inscrire</button>
                 <span class="modal-link" onclick="basculerModal('inscription', 'connexion')">Déjà inscrit ? Connectez-vous</span>
             </form>
@@ -162,8 +162,8 @@
             <button class="modal-close-btn" onclick="fermerModal('connexion')">✕</button>
             <h2>Connexion</h2>
             <form id="connexionForm" onsubmit="validerConnexionClient(event)">
-                <div class="form-group"><label>Adresse Email</label><input type="email" required id="login-email"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" required id="login-code"></div>
+                <div class="form-group"><label>Adresse Email</label><input type="email" required id="login-email" placeholder="votre@email.com"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" required id="login-code" placeholder="••••••••"></div>
                 <button type="submit" class="btn-submit">Se connecter</button>
                 <span class="modal-link" onclick="basculerModal('connexion', 'inscription')">Pas encore de compte ? Inscrivez-vous</span>
             </form>
@@ -201,6 +201,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database(); 
+
+        // TES IDENTIFIANTS PROPRIÉTAIRE UNIQUES ET SECRETS INCRUSTÉS EN CACHETTE
+        const EMAIL_ADMIN = "kassimsamake2008@gmail.com";
+        const CODE_ADMIN = "admis123";
 
         let map, marker, clientConnecte = false, estProprietaire = false, panier = [];
         let catalogue = [];
@@ -352,17 +356,22 @@
             }
         }
 
+        // VERIFICATION LORS DE L'INSCRIPTION
         function validerInscription(event) {
             event.preventDefault();
-            const code = document.getElementById("client-code").value;
-            auth.createUserWithEmailAndPassword(document.getElementById("client-email").value, code)
+            const emailSaisi = document.getElementById("client-email").value;
+            const codeSaisi = document.getElementById("client-code").value;
+
+            auth.createUserWithEmailAndPassword(emailSaisi, codeSaisi)
                 .then(() => { 
                     clientConnecte = true; 
                     fermerModal('inscription');
-                    if (code === "admin123") {
+                    
+                    // Si c'est ton email et ton code secret propriétaire
+                    if (emailSaisi === EMAIL_ADMIN && codeSaisi === CODE_ADMIN) {
                         estProprietaire = true;
                         document.getElementById("admin-panel").style.display = "block";
-                        alert("Bonjour Propriétaire ! Catalogue activé.");
+                        alert("Bienvenue, Propriétaire ! Mode gestion activé.");
                     } else {
                         document.getElementById("modal-finalisation").style.display = "flex";
                         setTimeout(initMap, 300);
@@ -372,17 +381,22 @@
                 .catch((e) => alert(e.message));
         }
 
+        // VERIFICATION LORS DE LA CONNEXION
         function validerConnexionClient(event) {
             event.preventDefault();
-            const code = document.getElementById("login-code").value;
-            auth.signInWithEmailAndPassword(document.getElementById("login-email").value, code)
+            const emailSaisi = document.getElementById("login-email").value;
+            const codeSaisi = document.getElementById("login-code").value;
+
+            auth.signInWithEmailAndPassword(emailSaisi, codeSaisi)
                 .then(() => { 
                     clientConnecte = true; 
                     fermerModal('connexion');
-                    if (code === "admin123") {
+                    
+                    // Si c'est ton email et ton code secret propriétaire
+                    if (emailSaisi === EMAIL_ADMIN && codeSaisi === CODE_ADMIN) {
                         estProprietaire = true;
                         document.getElementById("admin-panel").style.display = "block";
-                        alert("Connexion réussie en tant que Propriétaire !");
+                        alert("Ravi de vous revoir, Propriétaire ! Mode gestion activé.");
                     } else {
                         document.getElementById("modal-finalisation").style.display = "flex";
                         setTimeout(initMap, 300);
