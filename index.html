@@ -8,6 +8,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -118,7 +119,7 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE SÉCURISÉE
+        // CONFIGURATION FIREBASE
         const firebaseConfig = {
           apiKey: "AIzaSyCPFqvs5iD0h4diR_mcwFdi79M-QUlsPo0",
           authDomain: "ma-boutique-653ef.firebaseapp.com",
@@ -129,16 +130,14 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const database = firebase.database(); // Connexion à la base de données
 
         let map, marker, clientConnecte = false, estProprietaire = false, panier = [];
-        let catalogue = [
-            { id: 1, titre: "Montre Luxe", prix: 65000, img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500" },
-            { id: 2, titre: "Casque Audio Pro", prix: 85000, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500" }
-        ];
+        let catalogue = [];
 
         function initMap() {
             if (map) return; 
-            map = L.map('map').setView([12.6392, -8.0029], 12); // Centré par défaut sur Bamako
+            map = L.map('map').setView([12.6392, -8.0029], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
             map.on('click', function(e) {
@@ -152,26 +151,20 @@
             document.getElementById("client-coords").value = "Lat: " + lat.toFixed(5) + ", Lng: " + lng.toFixed(5);
         }
 
-        // FONCTION MAGIQUE DE GÉOLOCALISATION DIRECTE
         function trouverMaPosition() {
             if (!navigator.geolocation) {
                 return alert("La géolocalisation n'est pas supportée par votre navigateur.");
             }
-            
             alert("Recherche de votre position en cours... Veuillez autoriser l'accès si demandé.");
-            
             navigator.geolocation.getCurrentPosition(function(position) {
                 const maLat = position.coords.latitude;
                 const maLng = position.coords.longitude;
-                
-                // On déplace la carte sur sa vraie position et on zoome fort (16)
                 map.setView([maLat, maLng], 16);
                 placerMarqueur(maLat, maLng);
-                
             }, function() {
                 alert("Impossible de récupérer votre position. Vérifiez que votre GPS est activé.");
             }, {
-                enableHighAccuracy: true, // Force l'utilisation du GPS précis du téléphone
+                enableHighAccuracy: true,
                 timeout: 10000
             });
         }
@@ -182,13 +175,36 @@
             if(ouvrir === 'finalisation') { setTimeout(initMap, 300); }
         }
 
+        // CHARGEMENT ET AFFICHAGE EN TEMPS RÉEL DEPUIS FIREBASE
+        function ecouterCatalogue() {
+            database.ref('produits').on('value', (snapshot) => {
+                catalogue = [];
+                const donnees = snapshot.val();
+                if (donnees) {
+                    Object.keys(donnees).forEach(idCle => {
+                        catalogue.push({
+                            id: idCle,
+                            titre: donnees[idCle].titre,
+                            prix: donnees[idCle].prix,
+                            img: donnees[idCle].img
+                        });
+                    });
+                }
+                afficherProduits();
+            });
+        }
+
         function afficherProduits() {
             const container = document.getElementById("products-container");
             container.innerHTML = "";
+            if (catalogue.length === 0) {
+                container.innerHTML = "<p style='text-align:center; width:100%; color:#7f8c8d;'>Aucun produit disponible pour le moment.</p>";
+                return;
+            }
             catalogue.forEach(prod => {
                 container.innerHTML += `
                     <div class="product-card">
-                        <button class="btn-delete" style="display: ${estProprietaire ? 'block' : 'none'}" onclick="retirerProduit(${prod.id})">❌ Supprimer</button>
+                        <button class="btn-delete" style="display: ${estProprietaire ? 'block' : 'none'}" onclick="retirerProduit('${prod.id}')">❌ Supprimer</button>
                         <img src="${prod.img}" class="product-image">
                         <div class="product-info">
                             <h3>${prod.titre}</h3>
@@ -221,7 +237,7 @@
             const listeArticles = panier.map(item => item.nom).join(", ");
 
             const chiffresPurs = coords.replace("Lat: ", "").replace(" Lng: ", "");
-            const lienItineraire = "http://maps.google.com/maps?daddr=" + chiffresPurs;
+            const lienItineraire = "http://maps.google.com/?q=" + chiffresPurs;
 
             fetch("https://formspree.io/f/mkoejwed", {
                 method: "POST",
@@ -259,14 +275,47 @@
         }
         
         function ouvrirEspaceProprietaire() {
-            if (prompt("Mot de passe :") === "admin123") { estProprietaire = true; document.getElementById("admin-panel").style.display = "block"; afficherProduits(); }
+            if (prompt("Mot de passe :") === "admin123") { 
+                estProprietaire = true; 
+                document.getElementById("admin-panel").style.display = "block"; 
+                afficherProduits(); 
+            }
         }
+
+        // ACCORD AVEC LA BASE DE DONNÉES EN LIGNE
         function ajouterProduitManuel() {
-            const t = document.getElementById("new-title").value, p = parseFloat(document.getElementById("new-price").value), i = document.getElementById("new-img").value;
-            if (t && !isNaN(p) && i) { catalogue.push({ id: Date.now(), titre: t, prix: p, img: i }); afficherProduits(); }
+            const t = document.getElementById("new-title").value;
+            const p = parseFloat(document.getElementById("new-price").value);
+            const i = document.getElementById("new-img").value;
+            
+            if (t && !isNaN(p) && i) {
+                const nouvelId = database.ref('produits').push().key;
+                database.ref('produits/' + nouvelId).set({
+                    titre: t,
+                    prix: p,
+                    img: i
+                }).then(() => {
+                    // Nettoyer le formulaire
+                    document.getElementById("new-title").value = "";
+                    document.getElementById("new-price").value = "";
+                    document.getElementById("new-img").value = "";
+                    alert("Produit enregistré définitivement !");
+                }).catch(err => alert("Erreur Firebase : " + err.message));
+            } else {
+                alert("Veuillez remplir correctement tous les champs.");
+            }
         }
-        function retirerProduit(id) { catalogue = catalogue.filter(p => p.id !== id); afficherProduits(); }
-        window.onload = afficherProduits;
+
+        function retirerProduit(id) {
+            if(confirm("Voulez-vous vraiment supprimer ce produit ?")) {
+                database.ref('produits/' + id).remove()
+                    .then(() => alert("Produit supprimé !"))
+                    .catch(err => alert("Erreur : " + err.message));
+            }
+        }
+
+        // Lancement de l'écoute au démarrage
+        window.onload = ecouterCatalogue;
     </script>
 </body>
-</html>
+    </html>
