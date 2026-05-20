@@ -25,8 +25,8 @@
         .nav-controls { display: flex; gap: 12px; align-items: center; }
         .cart-status { font-weight: bold; color: white; cursor: pointer; background: #ef4444; padding: 10px 18px; border-radius: 25px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transition: transform 0.2s; }
         .cart-status:hover { transform: scale(1.05); }
-        .btn-admin-toggle { background: #f1f5f9; color: #475569; border: none; padding: 10px 18px; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-admin-toggle:hover { background: #e2e8f0; color: #1e293b; }
+        .btn-admin-toggle { background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+        .btn-admin-toggle:hover { background: #2563eb; }
         
         /* BARRE DE RECHERCHE */
         .search-container { max-width: 600px; margin: 10px auto 25px auto; }
@@ -92,7 +92,7 @@
         <div class="navbar">
             <a href="#" class="logo">🛍️ Bmultiservice</a>
             <div class="nav-controls">
-                <button class="btn-admin-toggle" onclick="ouvrirEspaceProprietaire()">Connexion Propriétaire</button>
+                <button class="btn-admin-toggle" onclick="ouvrirModalConnexionDirecte()">Connexion / Inscription</button>
                 <div class="cart-status" onclick="ouvrirPanierPopup()">🛒 Mon Panier (<span id="cart-count">0</span>)</div>
             </div>
         </div>
@@ -146,12 +146,12 @@
 
     <div id="modal-inscription" class="modal-overlay">
         <div class="modal-container">
-            <button class="modal-close-btn" onclick="basculerModal('inscription', 'panier')">← Retour</button>
-            <h2>Créer un compte Client</h2>
+            <button class="modal-close-btn" onclick="fermerModal('inscription')">✕</button>
+            <h2>Créer un compte</h2>
             <form id="inscriptionForm" onsubmit="validerInscription(event)">
                 <div class="form-group"><label>Adresse Email</label><input type="email" required id="client-email"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code"></div>
-                <button type="submit" class="btn-submit">S'inscrire et continuer</button>
+                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code" placeholder="Propriétaire: admin123"></div>
+                <button type="submit" class="btn-submit">S'inscrire</button>
                 <span class="modal-link" onclick="basculerModal('inscription', 'connexion')">Déjà inscrit ? Connectez-vous</span>
             </form>
         </div>
@@ -159,8 +159,8 @@
 
     <div id="modal-connexion" class="modal-overlay">
         <div class="modal-container">
-            <button class="modal-close-btn" onclick="basculerModal('connexion', 'inscription')">← Retour</button>
-            <h2>Connexion Client</h2>
+            <button class="modal-close-btn" onclick="fermerModal('connexion')">✕</button>
+            <h2>Connexion</h2>
             <form id="connexionForm" onsubmit="validerConnexionClient(event)">
                 <div class="form-group"><label>Adresse Email</label><input type="email" required id="login-email"></div>
                 <div class="form-group"><label>Mot de passe</label><input type="password" required id="login-code"></div>
@@ -188,7 +188,7 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE SÉCURISÉE HACHÉE EN BASE64
+        // CONFIGURATION FIREBASE
         const sK = "QUl6YVN5Q1BGcXZzNWlEMGg0ZGlSX21jd0ZkaTc5TS1RVbHNQbzA=";
         const firebaseConfig = {
           apiKey: atob(sK),
@@ -206,7 +206,6 @@
         let catalogue = [];
         let categorieSelectionnee = "tous";
 
-        // Chargement du panier sauvegardé au démarrage
         if (localStorage.getItem("bmulti_panier")) {
             try {
                 panier = JSON.parse(localStorage.getItem("bmulti_panier"));
@@ -236,11 +235,15 @@
             }, function() { alert("Impossible de récupérer la position GPS."); }, { enableHighAccuracy: true, timeout: 10000 });
         }
 
+        function ouvrirModalConnexionDirecte() {
+            document.getElementById("modal-connexion").style.display = "flex";
+        }
+
         function basculerModal(fermer, ouvrir) {
             document.getElementById(`modal-${fermer}`).style.display = "none";
             document.getElementById(`modal-${ouvrir}`).style.display = "flex";
-            if(ouvrir === 'finalisation') { setTimeout(initMap, 300); }
         }
+        
         function fermerModal(cible) { document.getElementById(`modal-${cible}`).style.display = "none"; }
 
         function ecouterCatalogue() {
@@ -342,7 +345,7 @@
             if (panier.length === 0) return alert("Votre panier est vide.");
             fermerModal('panier');
             if (!clientConnecte) {
-                document.getElementById("modal-inscription").style.display = "flex";
+                document.getElementById("modal-connexion").style.display = "flex";
             } else {
                 document.getElementById("modal-finalisation").style.display = "flex";
                 setTimeout(initMap, 300);
@@ -351,15 +354,41 @@
 
         function validerInscription(event) {
             event.preventDefault();
-            auth.createUserWithEmailAndPassword(document.getElementById("client-email").value, document.getElementById("client-code").value)
-                .then(() => { clientConnecte = true; basculerModal('inscription', 'finalisation'); })
+            const code = document.getElementById("client-code").value;
+            auth.createUserWithEmailAndPassword(document.getElementById("client-email").value, code)
+                .then(() => { 
+                    clientConnecte = true; 
+                    fermerModal('inscription');
+                    if (code === "admin123") {
+                        estProprietaire = true;
+                        document.getElementById("admin-panel").style.display = "block";
+                        alert("Bonjour Propriétaire ! Catalogue activé.");
+                    } else {
+                        document.getElementById("modal-finalisation").style.display = "flex";
+                        setTimeout(initMap, 300);
+                    }
+                    filtrerProduits();
+                })
                 .catch((e) => alert(e.message));
         }
 
         function validerConnexionClient(event) {
             event.preventDefault();
-            auth.signInWithEmailAndPassword(document.getElementById("login-email").value, document.getElementById("login-code").value)
-                .then(() => { clientConnecte = true; basculerModal('inscription', 'finalisation'); })
+            const code = document.getElementById("login-code").value;
+            auth.signInWithEmailAndPassword(document.getElementById("login-email").value, code)
+                .then(() => { 
+                    clientConnecte = true; 
+                    fermerModal('connexion');
+                    if (code === "admin123") {
+                        estProprietaire = true;
+                        document.getElementById("admin-panel").style.display = "block";
+                        alert("Connexion réussie en tant que Propriétaire !");
+                    } else {
+                        document.getElementById("modal-finalisation").style.display = "flex";
+                        setTimeout(initMap, 300);
+                    }
+                    filtrerProduits();
+                })
                 .catch((e) => alert(e.message));
         }
 
@@ -385,10 +414,6 @@
                     fermerModal('finalisation');
                 } else { alert("Erreur lors de la validation."); }
             }).catch(() => alert("Erreur réseau."));
-        }
-        
-        function ouvrirEspaceProprietaire() {
-            if (prompt("Mot de passe :") === "admin123") { estProprietaire = true; document.getElementById("admin-panel").style.display = "block"; filtrerProduits(); }
         }
 
         function ajouterProduitManuel() {
