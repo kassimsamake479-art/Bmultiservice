@@ -24,6 +24,11 @@
         .cart-status { font-weight: bold; color: #e74c3c; cursor: pointer; background: #fdedec; padding: 8px 15px; border-radius: 20px; }
         .btn-admin-toggle { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         
+        /* BARRE DE RECHERCHE DYNAMIQUE */
+        .search-container { max-width: 600px; margin: 0 auto 30px auto; display: flex; justify-content: center; }
+        .search-container input { width: 100%; padding: 15px 25px; border: 2px solid #3498db; border-radius: 30px; font-size: 16px; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .search-container input:focus { border-color: #2ecc71; box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2); }
+
         /* DESIGN POPUPS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
         .modal-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 500px; position: relative; }
@@ -66,6 +71,11 @@
     </header>
 
     <main class="container">
+        
+        <div class="search-container">
+            <input type="text" id="search-bar" placeholder="🔍 Rechercher un produit, une marque..." onkeyup="filtrerProduits()">
+        </div>
+
         <section id="admin-panel">
             <h3>🛠️ Espace Propriétaire : Gestion du catalogue</h3>
             <div class="admin-form">
@@ -130,7 +140,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const database = firebase.database(); // Connexion à la base de données
+        const database = firebase.database(); 
 
         let map, marker, clientConnecte = false, estProprietaire = false, panier = [];
         let catalogue = [];
@@ -190,18 +200,25 @@
                         });
                     });
                 }
-                afficherProduits();
+                filtrerProduits(); // Actualise l'affichage tout en gardant la recherche active
             });
         }
 
-        function afficherProduits() {
+        // NOUVELLE FONCTION DE RECHERCHE
+        function filtrerProduits() {
+            const texteRecherche = document.getElementById("search-bar").value.toLowerCase();
+            const produitsFiltres = catalogue.filter(prod => prod.titre.toLowerCase().includes(texteRecherche));
+            afficherProduits(produitsFiltres);
+        }
+
+        function afficherProduits(liste = catalogue) {
             const container = document.getElementById("products-container");
             container.innerHTML = "";
-            if (catalogue.length === 0) {
-                container.innerHTML = "<p style='text-align:center; width:100%; color:#7f8c8d;'>Aucun produit disponible pour le moment.</p>";
+            if (liste.length === 0) {
+                container.innerHTML = "<p style='text-align:center; width:100%; color:#7f8c8d; font-size:18px; margin-top:20px;'>Aucun produit trouvé. 😔</p>";
                 return;
             }
-            catalogue.forEach(prod => {
+            liste.forEach(prod => {
                 container.innerHTML += `
                     <div class="product-card">
                         <button class="btn-delete" style="display: ${estProprietaire ? 'block' : 'none'}" onclick="retirerProduit('${prod.id}')">❌ Supprimer</button>
@@ -278,7 +295,7 @@
             if (prompt("Mot de passe :") === "admin123") { 
                 estProprietaire = true; 
                 document.getElementById("admin-panel").style.display = "block"; 
-                afficherProduits(); 
+                filtrerProduits(); 
             }
         }
 
@@ -295,7 +312,6 @@
                     prix: p,
                     img: i
                 }).then(() => {
-                    // Nettoyer le formulaire
                     document.getElementById("new-title").value = "";
                     document.getElementById("new-price").value = "";
                     document.getElementById("new-img").value = "";
@@ -314,8 +330,7 @@
             }
         }
 
-        // Lancement de l'écoute au démarrage
         window.onload = ecouterCatalogue;
     </script>
 </body>
-    </html>
+</html>
