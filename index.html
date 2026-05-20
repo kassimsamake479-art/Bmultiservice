@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="google-site-verification" content="bHTQzbZ0EgaOcNq5duNKLnyVVnFsKj4iv09RIPfnilk" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bmultiservice | Boutique Premium</title>
+    <title>Bmultiservice</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -14,76 +14,48 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: #f8fafc; color: #1e293b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f5f6fa; color: #333; }
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        header { background: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 90; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .logo { font-size: 22px; font-weight: bold; color: #2c3e50; text-decoration: none; }
+        .nav-controls { display: flex; gap: 15px; align-items: center; }
+        .cart-status { font-weight: bold; color: #e74c3c; cursor: pointer; background: #fdedec; padding: 8px 15px; border-radius: 20px; }
+        .btn-admin-toggle { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         
-        /* HEADER PREMIUM */
-        header { background: white; padding: 15px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 90; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
-        .logo { font-size: 24px; font-weight: 800; color: #1e3a8a; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-controls { display: flex; gap: 12px; align-items: center; }
-        .cart-status { font-weight: bold; color: white; cursor: pointer; background: #ef4444; padding: 10px 18px; border-radius: 25px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transition: transform 0.2s; }
-        .cart-status:hover { transform: scale(1.05); }
-        .btn-admin-toggle { background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
-        .btn-admin-toggle:hover { background: #2563eb; }
-        
-        /* BARRE DE RECHERCHE */
-        .search-container { max-width: 600px; margin: 10px auto 25px auto; }
-        .search-container input { width: 100%; padding: 16px 25px; border: 2px solid #e2e8f0; border-radius: 50px; font-size: 16px; outline: none; box-shadow: 0 4px 10px rgba(0,0,0,0.02); transition: all 0.3s; }
-        .search-container input:focus { border-color: #3b82f6; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15); }
+        /* BARRE DE RECHERCHE DYNAMIQUE */
+        .search-container { max-width: 600px; margin: 0 auto 30px auto; display: flex; justify-content: center; }
+        .search-container input { width: 100%; padding: 15px 25px; border: 2px solid #3498db; border-radius: 30px; font-size: 16px; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .search-container input:focus { border-color: #2ecc71; box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2); }
 
-        /* BARRE DE CATÉGORIES */
-        .categories-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 35px; flex-wrap: wrap; }
-        .category-btn { background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: 14px; color: #64748b; box-shadow: 0 2px 5px rgba(0,0,0,0.01); transition: all 0.2s; }
-        .category-btn.active, .category-btn:hover { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25); }
-
-        /* POPUPS / MODALS MODERNES */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .modal-container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .modal-close-btn { position: absolute; top: 15px; right: 20px; background: #f1f5f9; border: none; font-size: 18px; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; }
-        .modal-close-btn:hover { background: #e2e8f0; color: #1e293b; }
-        .modal-container h2 { margin-bottom: 20px; color: #1e293b; text-align: center; font-weight: 800; }
+        /* DESIGN POPUPS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        .modal-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 500px; position: relative; }
+        .modal-container h2 { margin-bottom: 20px; color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #4b5563; }
+        .form-group input { width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
         
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #475569; font-size: 14px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 15px; outline: none; background: #f8fafc; }
-        .form-group input:focus { border-color: #3b82f6; background: white; }
+        /* BOUTON GÉOLOCALISATION CLIENT */
+        .btn-gps { width: 100%; padding: 10px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #map { width: 100%; height: 250px; margin-top: 10px; border-radius: 6px; border: 1px solid #ccc; z-index: 5; }
         
-        /* DESIGN DU PANIER DANS LE POPUP */
-        .cart-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-        .cart-item-info { display: flex; align-items: center; gap: 12px; }
-        .cart-item-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; }
-        .cart-item-title { font-weight: 600; font-size: 15px; color: #1e293b; }
-        .cart-item-price { color: #ef4444; font-weight: 700; font-size: 14px; margin-top: 2px; }
-        .btn-remove-item { background: #fee2e2; color: #ef4444; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-remove-item:hover { background: #fca5a5; }
-        .cart-total-box { margin-top: 20px; padding-top: 15px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #1e293b; }
+        .btn-submit { width: 100%; padding: 14px; background: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; }
+        .modal-link { text-align: center; margin-top: 15px; font-size: 14px; color: #3498db; cursor: pointer; display: block; }
         
-        /* BOUTONS */
-        .btn-gps { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2); }
-        #map { width: 100%; height: 220px; margin-top: 10px; border-radius: 10px; border: 1px solid #cbd5e1; z-index: 5; }
-        .btn-submit { width: 100%; padding: 14px; background: #10b981; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
-        .btn-submit:hover { background: #059669; }
-        .modal-link { text-align: center; margin-top: 15px; font-size: 14px; color: #3b82f6; cursor: pointer; display: block; font-weight: 600; }
-        
-        /* ESPACE ADMIN & GRILLE PRODUITS */
-        #admin-panel { background: #f0fdf4; border-radius: 16px; border: 2px dashed #10b981; padding: 20px; margin-bottom: 30px; display: none; }
-        .admin-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .admin-form input, .admin-form select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; flex: 1; min-width: 150px; background: white; }
-        .admin-form button { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 30px; }
-        .product-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; position: relative; border: 1px solid #f1f5f9; transition: transform 0.3s, box-shadow 0.3s; }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.06); }
-        .product-image { width: 100%; height: 240px; object-fit: cover; }
+        /* ESPACE ADMIN & PRODUITS */
+        #admin-panel { background: #ebf3f9; border-radius: 8px; border: 2px dashed #3498db; padding: 20px; margin-bottom: 30px; display: none; }
+        .admin-form { display: flex; flex-wrap: wrap; gap: 10px; }
+        .admin-form input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 180px; }
+        .admin-form button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; }
+        .product-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative; }
+        .product-image { width: 100%; height: 220px; object-fit: cover; }
         .product-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .product-price { font-size: 22px; font-weight: 800; color: #ef4444; margin: 8px 0 15px 0; }
-        .btn-add { background: #1e3a8a; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.2s; }
-        .btn-add:hover { background: #172554; }
-        .btn-delete { position: absolute; top: 12px; right: 12px; background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; display: none; z-index: 10; font-weight: bold; }
-        .product-category-tag { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; tracking-content: 1px; }
-        .product-card h3 { font-size: 18px; font-weight: 700; color: #1e293b; }
+        .product-price { font-size: 20px; font-weight: bold; color: #e74c3c; margin: 10px 0 15px 0; }
+        .btn-add { background: #34495e; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-delete { position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; display: none; z-index: 10; }
     </style>
 </head>
 <body>
@@ -92,23 +64,16 @@
         <div class="navbar">
             <a href="#" class="logo">🛍️ Bmultiservice</a>
             <div class="nav-controls">
-                <button class="btn-admin-toggle" onclick="ouvrirModalConnexionDirecte()">Connexion / Inscription</button>
-                <div class="cart-status" onclick="ouvrirPanierPopup()">🛒 Mon Panier (<span id="cart-count">0</span>)</div>
+                <button class="btn-admin-toggle" onclick="ouvrirEspaceProprietaire()">Connexion Propriétaire</button>
+                <div class="cart-status" onclick="ouvrirPanierOuCommande()">🛒 Panier (<span id="cart-count">0</span>)</div>
             </div>
         </div>
     </header>
 
     <main class="container">
+        
         <div class="search-container">
-            <input type="text" id="search-bar" placeholder="🔍 Que recherchez-vous aujourd'hui ?" onkeyup="filtrerProduits()">
-        </div>
-
-        <div class="categories-bar" id="categories-container">
-            <button class="category-btn active" onclick="changerCategorie('tous', this)">✨ Tout voir</button>
-            <button class="category-btn" onclick="changerCategorie('Chaussures', this)">👟 Chaussures</button>
-            <button class="category-btn" onclick="changerCategorie('Vêtements', this)">👕 Vêtements</button>
-            <button class="category-btn" onclick="changerCategorie('Électronique', this)">⚡ Électronique</button>
-            <button class="category-btn" onclick="changerCategorie('Divers', this)">📦 Divers</button>
+            <input type="text" id="search-bar" placeholder="🔍 Rechercher un produit, une marque..." onkeyup="filtrerProduits()">
         </div>
 
         <section id="admin-panel">
@@ -117,41 +82,19 @@
                 <input type="text" id="new-title" placeholder="Nom du produit" required>
                 <input type="number" id="new-price" placeholder="Prix (en F CFA)" required>
                 <input type="text" id="new-img" placeholder="Lien URL de la photo" required>
-                <select id="new-category" required>
-                    <option value="Divers">-- Choisir une catégorie --</option>
-                    <option value="Chaussures">👟 Chaussures</option>
-                    <option value="Vêtements">👕 Vêtements</option>
-                    <option value="Électronique">⚡ Électronique</option>
-                    <option value="Divers">📦 Divers</option>
-                </select>
                 <button onclick="ajouterProduitManuel()">Ajouter le produit</button>
             </div>
         </section>
-        
         <section class="products-grid" id="products-container"></section>
     </main>
 
-    <div id="modal-panier" class="modal-overlay">
-        <div class="modal-container">
-            <button class="modal-close-btn" onclick="fermerModal('panier')">✕</button>
-            <h2>🛒 Votre Panier</h2>
-            <div id="cart-items-list"></div>
-            <div class="cart-total-box">
-                <span>Total :</span>
-                <span id="cart-total-price">0 F CFA</span>
-            </div>
-            <button class="btn-submit" onclick="clicPasserCommande()">Passer la commande ➔</button>
-        </div>
-    </div>
-
     <div id="modal-inscription" class="modal-overlay">
         <div class="modal-container">
-            <button class="modal-close-btn" onclick="fermerModal('inscription')">✕</button>
-            <h2>Créer un compte</h2>
+            <h2>Créer un compte Client</h2>
             <form id="inscriptionForm" onsubmit="validerInscription(event)">
-                <div class="form-group"><label>Adresse Email</label><input type="email" required id="client-email" placeholder="votre@email.com"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code" placeholder="••••••••"></div>
-                <button type="submit" class="btn-submit">S'inscrire</button>
+                <div class="form-group"><label>Adresse Email</label><input type="email" required id="client-email"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" required id="client-code"></div>
+                <button type="submit" class="btn-submit">S'inscrire et continuer</button>
                 <span class="modal-link" onclick="basculerModal('inscription', 'connexion')">Déjà inscrit ? Connectez-vous</span>
             </form>
         </div>
@@ -159,11 +102,10 @@
 
     <div id="modal-connexion" class="modal-overlay">
         <div class="modal-container">
-            <button class="modal-close-btn" onclick="fermerModal('connexion')">✕</button>
-            <h2>Connexion</h2>
+            <h2>Connexion Client</h2>
             <form id="connexionForm" onsubmit="validerConnexionClient(event)">
-                <div class="form-group"><label>Adresse Email</label><input type="email" required id="login-email" placeholder="votre@email.com"></div>
-                <div class="form-group"><label>Mot de passe</label><input type="password" required id="login-code" placeholder="••••••••"></div>
+                <div class="form-group"><label>Adresse Email</label><input type="email" required id="login-email"></div>
+                <div class="form-group"><label>Mot de passe</label><input type="password" required id="login-code"></div>
                 <button type="submit" class="btn-submit">Se connecter</button>
                 <span class="modal-link" onclick="basculerModal('connexion', 'inscription')">Pas encore de compte ? Inscrivez-vous</span>
             </form>
@@ -172,7 +114,6 @@
 
     <div id="modal-finalisation" class="modal-overlay">
         <div class="modal-container">
-            <button class="modal-close-btn" onclick="fermerModal('finalisation')">✕ Annuler</button>
             <h2>Détails de livraison</h2>
             <form id="finalisationForm" onsubmit="ValiderCommandeFin(event)">
                 <div class="form-group"><label>Numéro de téléphone</label><input type="tel" required id="client-tel" placeholder="Ex: +223..."></div>
@@ -182,16 +123,15 @@
                     <input type="text" id="client-coords" readonly placeholder="Ou cliquez manuellement sur la carte..." required>
                     <div id="map"></div>
                 </div>
-                <button type="submit" class="btn-submit">Confirmer ma commande définitive</button>
+                <button type="submit" class="btn-submit">Confirmer ma commande</button>
             </form>
         </div>
     </div>
 
     <script>
         // CONFIGURATION FIREBASE
-        const sK = "QUl6YVN5Q1BGcXZzNWlEMGg0ZGlSX21jd0ZkaTc5TS1RVbHNQbzA=";
         const firebaseConfig = {
-          apiKey: atob(sK),
+          apiKey: "AIzaSyCPFqvs5iD0h4diR_mcwFdi79M-QUlsPo0",
           authDomain: "ma-boutique-653ef.firebaseapp.com",
           projectId: "ma-boutique-653ef",
           storageBucket: "ma-boutique-653ef.firebasestorage.app",
@@ -202,26 +142,17 @@
         const auth = firebase.auth();
         const database = firebase.database(); 
 
-        // TES IDENTIFIANTS PROPRIÉTAIRE UNIQUES ET SECRETS INCRUSTÉS EN CACHETTE
-        const EMAIL_ADMIN = "kassimsamake2008@gmail.com";
-        const CODE_ADMIN = "admis123";
-
         let map, marker, clientConnecte = false, estProprietaire = false, panier = [];
         let catalogue = [];
-        let categorieSelectionnee = "tous";
-
-        if (localStorage.getItem("bmulti_panier")) {
-            try {
-                panier = JSON.parse(localStorage.getItem("bmulti_panier"));
-                document.getElementById("cart-count").innerText = panier.length;
-            } catch(e) { panier = []; }
-        }
 
         function initMap() {
             if (map) return; 
             map = L.map('map').setView([12.6392, -8.0029], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            map.on('click', function(e) { placerMarqueur(e.latlng.lat, e.latlng.lng); });
+
+            map.on('click', function(e) {
+                placerMarqueur(e.latlng.lat, e.latlng.lng);
+            });
         }
 
         function placerMarqueur(lat, lng) {
@@ -231,58 +162,61 @@
         }
 
         function trouverMaPosition() {
-            if (!navigator.geolocation) return alert("La géolocalisation n'est pas supportée.");
-            alert("Recherche GPS en cours...");
+            if (!navigator.geolocation) {
+                return alert("La géolocalisation n'est pas supportée par votre navigateur.");
+            }
+            alert("Recherche de votre position en cours... Veuillez autoriser l'accès si demandé.");
             navigator.geolocation.getCurrentPosition(function(position) {
-                const maLat = position.coords.latitude; const maLng = position.coords.longitude;
-                map.setView([maLat, maLng], 16); placerMarqueur(maLat, maLng);
-            }, function() { alert("Impossible de récupérer la position GPS."); }, { enableHighAccuracy: true, timeout: 10000 });
-        }
-
-        function ouvrirModalConnexionDirecte() {
-            document.getElementById("modal-connexion").style.display = "flex";
+                const maLat = position.coords.latitude;
+                const maLng = position.coords.longitude;
+                map.setView([maLat, maLng], 16);
+                placerMarqueur(maLat, maLng);
+            }, function() {
+                alert("Impossible de récupérer votre position. Vérifiez que votre GPS est activé.");
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
         }
 
         function basculerModal(fermer, ouvrir) {
             document.getElementById(`modal-${fermer}`).style.display = "none";
             document.getElementById(`modal-${ouvrir}`).style.display = "flex";
+            if(ouvrir === 'finalisation') { setTimeout(initMap, 300); }
         }
-        
-        function fermerModal(cible) { document.getElementById(`modal-${cible}`).style.display = "none"; }
 
+        // CHARGEMENT ET AFFICHAGE EN TEMPS RÉEL DEPUIS FIREBASE
         function ecouterCatalogue() {
             database.ref('produits').on('value', (snapshot) => {
-                catalogue = []; const donnees = snapshot.val();
+                catalogue = [];
+                const donnees = snapshot.val();
                 if (donnees) {
                     Object.keys(donnees).forEach(idCle => {
                         catalogue.push({
-                            id: idCle, titre: donnees[idCle].titre, prix: donnees[idCle].prix, img: donnees[idCle].img, categorie: donnees[idCle].categorie || "Divers"
+                            id: idCle,
+                            titre: donnees[idCle].titre,
+                            prix: donnees[idCle].prix,
+                            img: donnees[idCle].img
                         });
                     });
                 }
-                filtrerProduits(); 
+                filtrerProduits(); // Actualise l'affichage tout en gardant la recherche active
             });
         }
 
-        function changerCategorie(cat, element) {
-            categorieSelectionnee = cat;
-            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            filtrerProduits();
-        }
-
+        // NOUVELLE FONCTION DE RECHERCHE
         function filtrerProduits() {
             const texteRecherche = document.getElementById("search-bar").value.toLowerCase();
-            let produitsFiltres = catalogue;
-            if (categorieSelectionnee !== "tous") { produitsFiltres = produitsFiltres.filter(prod => prod.categorie === categorieSelectionnee); }
-            produitsFiltres = produitsFiltres.filter(prod => prod.titre.toLowerCase().includes(texteRecherche));
+            const produitsFiltres = catalogue.filter(prod => prod.titre.toLowerCase().includes(texteRecherche));
             afficherProduits(produitsFiltres);
         }
 
         function afficherProduits(liste = catalogue) {
-            const container = document.getElementById("products-container"); container.innerHTML = "";
+            const container = document.getElementById("products-container");
+            container.innerHTML = "";
             if (liste.length === 0) {
-                container.innerHTML = "<p style='text-align:center; width:100%; color:#7f8c8d; font-size:18px; margin-top:20px;'>Aucun produit trouvé. 😔</p>"; return;
+                container.innerHTML = "<p style='text-align:center; width:100%; color:#7f8c8d; font-size:18px; margin-top:20px;'>Aucun produit trouvé. 😔</p>";
+                return;
             }
             liste.forEach(prod => {
                 container.innerHTML += `
@@ -290,119 +224,25 @@
                         <button class="btn-delete" style="display: ${estProprietaire ? 'block' : 'none'}" onclick="retirerProduit('${prod.id}')">❌ Supprimer</button>
                         <img src="${prod.img}" class="product-image">
                         <div class="product-info">
-                            <span class="product-category-tag">${prod.categorie}</span>
                             <h3>${prod.titre}</h3>
                             <p class="product-price">${prod.prix.toLocaleString('fr-FR')} F CFA</p>
-                            <button class="btn-add" onclick="ajouterAuPanier('${prod.id}', '${prod.titre.replace(/'/g, "\\'")}', ${prod.prix}, '${prod.img}')">Ajouter au panier</button>
+                            <button class="btn-add" onclick="ajouterAuPanier('${prod.titre.replace(/'/g, "\\'")}', ${prod.prix})">Ajouter au panier</button>
                         </div>
                     </div>`;
             });
         }
 
-        function ajouterAuPanier(id, nom, prix, img) {
-            panier.push({ idUnique: Date.now(), id, nom, prix, img });
-            sauvegarderPanier();
-            document.getElementById("cart-count").innerText = panier.length;
-            alert(`✅ ${nom} ajouté au panier !`);
-        }
-
-        function sauvegarderPanier() {
-            localStorage.setItem("bmulti_panier", JSON.stringify(panier));
-        }
-
-        function ouvrirPanierPopup() {
-            const listContainer = document.getElementById("cart-items-list");
-            listContainer.innerHTML = "";
-            
-            if (panier.length === 0) {
-                listContainer.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px 0;'>Votre panier est vide.</p>";
-                document.getElementById("cart-total-price").innerText = "0 F CFA";
-            } else {
-                let total = 0;
-                panier.forEach(item => {
-                    total += item.prix;
-                    listContainer.innerHTML += `
-                        <div class="cart-item">
-                            <div class="cart-item-info">
-                                <img src="${item.img}" class="cart-item-img">
-                                <div>
-                                    <div class="cart-item-title">${item.nom}</div>
-                                    <div class="cart-item-price">${item.prix.toLocaleString('fr-FR')} F CFA</div>
-                                </div>
-                            </div>
-                            <button class="btn-remove-item" onclick="retirerDuPanier(${item.idUnique})">❌</button>
-                        </div>`;
-                });
-                document.getElementById("cart-total-price").innerText = total.toLocaleString('fr-FR') + " F CFA";
-            }
-            document.getElementById("modal-panier").style.display = "flex";
-        }
-
-        function retirerDuPanier(idUnique) {
-            panier = panier.filter(item => item.idUnique !== idUnique);
-            sauvegarderPanier();
-            document.getElementById("cart-count").innerText = panier.length;
-            ouvrirPanierPopup();
-        }
-
-        function clicPasserCommande() {
-            if (panier.length === 0) return alert("Votre panier est vide.");
-            fermerModal('panier');
-            if (!clientConnecte) {
-                document.getElementById("modal-connexion").style.display = "flex";
-            } else {
-                document.getElementById("modal-finalisation").style.display = "flex";
-                setTimeout(initMap, 300);
-            }
-        }
-
-        // VERIFICATION LORS DE L'INSCRIPTION
         function validerInscription(event) {
             event.preventDefault();
-            const emailSaisi = document.getElementById("client-email").value;
-            const codeSaisi = document.getElementById("client-code").value;
-
-            auth.createUserWithEmailAndPassword(emailSaisi, codeSaisi)
-                .then(() => { 
-                    clientConnecte = true; 
-                    fermerModal('inscription');
-                    
-                    // Si c'est ton email et ton code secret propriétaire
-                    if (emailSaisi === EMAIL_ADMIN && codeSaisi === CODE_ADMIN) {
-                        estProprietaire = true;
-                        document.getElementById("admin-panel").style.display = "block";
-                        alert("Bienvenue, Propriétaire ! Mode gestion activé.");
-                    } else {
-                        document.getElementById("modal-finalisation").style.display = "flex";
-                        setTimeout(initMap, 300);
-                    }
-                    filtrerProduits();
-                })
+            auth.createUserWithEmailAndPassword(document.getElementById("client-email").value, document.getElementById("client-code").value)
+                .then(() => { clientConnecte = true; basculerModal('inscription', 'finalisation'); })
                 .catch((e) => alert(e.message));
         }
 
-        // VERIFICATION LORS DE LA CONNEXION
         function validerConnexionClient(event) {
             event.preventDefault();
-            const emailSaisi = document.getElementById("login-email").value;
-            const codeSaisi = document.getElementById("login-code").value;
-
-            auth.signInWithEmailAndPassword(emailSaisi, codeSaisi)
-                .then(() => { 
-                    clientConnecte = true; 
-                    fermerModal('connexion');
-                    
-                    // Si c'est ton email et ton code secret propriétaire
-                    if (emailSaisi === EMAIL_ADMIN && codeSaisi === CODE_ADMIN) {
-                        estProprietaire = true;
-                        document.getElementById("admin-panel").style.display = "block";
-                        alert("Ravi de vous revoir, Propriétaire ! Mode gestion activé.");
-                    } else {
-                        document.getElementById("modal-finalisation").style.display = "flex";
-                        setTimeout(initMap, 300);
-                    }
-                    filtrerProduits();
-                })
+            auth.signInWithEmailAndPassword(document.getElementById("login-email").value, document.getElementById("login-code").value)
+                .then(() => { clientConnecte = true; basculerModal('connexion', 'finalisation'); })
                 .catch((e) => alert(e.message));
         }
 
@@ -412,38 +252,82 @@
             const coords = document.getElementById("client-coords").value;
             const totalCommande = panier.reduce((s, i) => s + i.prix, 0).toLocaleString('fr-FR') + " F CFA";
             const listeArticles = panier.map(item => item.nom).join(", ");
+
             const chiffresPurs = coords.replace("Lat: ", "").replace(" Lng: ", "");
-            const lienItineraire = "https://www.google.com/maps?q=" + chiffresPurs;
+            const lienItineraire = "http://maps.google.com/?q=" + chiffresPurs;
 
             fetch("https://formspree.io/f/mkoejwed", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "Téléphone du client": tel, "Articles commandés": listeArticles, "Montant Total": totalCommande, "Lien Itinéraire Livraison": lienItineraire })
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "Téléphone du client": tel,
+                    "Articles commandés": listeArticles,
+                    "Montant Total": totalCommande,
+                    "Lien Itinéraire Livraison": lienItineraire
+                })
             })
             .then(response => {
                 if (response.ok) {
                     alert("Commande réussie ! Le vendeur a reçu vos coordonnées.");
-                    panier = [];
-                    sauvegarderPanier();
-                    document.getElementById("cart-count").innerText = "0";
-                    fermerModal('finalisation');
-                } else { alert("Erreur lors de la validation."); }
-            }).catch(() => alert("Erreur réseau."));
+                    panier = []; document.getElementById("cart-count").innerText = "0";
+                    document.getElementById("modal-finalisation").style.display = "none";
+                } else {
+                    alert("Erreur lors de la validation de la commande.");
+                }
+            })
+            .catch(error => {
+                alert("Erreur réseau ou connexion impossible.");
+            });
         }
 
+        function ajouterAuPanier(nom, prix) { panier.push({ nom, prix }); document.getElementById("cart-count").innerText = panier.length; }
+        
+        function ouvrirPanierOuCommande() {
+            if (panier.length === 0) return alert("Votre panier est vide.");
+            if (!clientConnecte) document.getElementById("modal-inscription").style.display = "flex";
+            else { 
+                document.getElementById("modal-finalisation").style.display = "flex";
+                setTimeout(initMap, 300);
+            }
+        }
+        
+        function ouvrirEspaceProprietaire() {
+            if (prompt("Mot de passe :") === "admin123") { 
+                estProprietaire = true; 
+                document.getElementById("admin-panel").style.display = "block"; 
+                filtrerProduits(); 
+            }
+        }
+
+        // ACCORD AVEC LA BASE DE DONNÉES EN LIGNE
         function ajouterProduitManuel() {
-            const t = document.getElementById("new-title").value; const p = parseFloat(document.getElementById("new-price").value);
-            const i = document.getElementById("new-img").value; const c = document.getElementById("new-category").value;
-            if (t && !isNaN(p) && i && c) {
+            const t = document.getElementById("new-title").value;
+            const p = parseFloat(document.getElementById("new-price").value);
+            const i = document.getElementById("new-img").value;
+            
+            if (t && !isNaN(p) && i) {
                 const nouvelId = database.ref('produits').push().key;
-                database.ref('produits/' + nouvelId).set({ titre: t, prix: p, img: i, categorie: c }).then(() => {
-                    document.getElementById("new-title").value = ""; document.getElementById("new-price").value = ""; document.getElementById("new-img").value = "";
-                    alert("Produit enregistré !");
-                });
-            } else { alert("Remplissez tous les champs."); }
+                database.ref('produits/' + nouvelId).set({
+                    titre: t,
+                    prix: p,
+                    img: i
+                }).then(() => {
+                    document.getElementById("new-title").value = "";
+                    document.getElementById("new-price").value = "";
+                    document.getElementById("new-img").value = "";
+                    alert("Produit enregistré définitivement !");
+                }).catch(err => alert("Erreur Firebase : " + err.message));
+            } else {
+                alert("Veuillez remplir correctement tous les champs.");
+            }
         }
 
         function retirerProduit(id) {
-            if(confirm("Supprimer ce produit ?")) { database.ref('produits/' + id).remove(); }
+            if(confirm("Voulez-vous vraiment supprimer ce produit ?")) {
+                database.ref('produits/' + id).remove()
+                    .then(() => alert("Produit supprimé !"))
+                    .catch(err => alert("Erreur : " + err.message));
+            }
         }
 
         window.onload = ecouterCatalogue;
